@@ -1,125 +1,132 @@
 /*
-Fiona Rowan
-Implementation of Gauss Jordan Elimination algorithm
-Use "example" in commandline argument to see this in action with a given example.
-Use any other argument to pass in your own augmented matrix representing a system
-of linear equations.
-
-
-
-
+  Implementation of Gauss Jordan Elimination algorithm
 */
 
 import java.util.Scanner;
 import java.io.*;
 
-public class GaussJordan{
+public class GaussJordan {
 
-public static void main(String args[] ){
-	Scanner user_input = new Scanner(System.in);
-	double[][] augmented; 
-	int columns;
-	int rows;
-	if(args[0].equals("example")){
-		System.out.println("This program simulates example from p.14.");
-		augmented = new double[][]{
-			{2,4,-2,2,4,2},
-			{1,2,-1,2,0,4},
-			{3,6,-2,1,9,1},
-			{5,10,-4,5,9,9}
-		};
-		// double array represents augmented matrix, from question 1.2.5
+	public static void main(String args[]) {
+		final Scanner commandlineInput = new Scanner(System.in);
+		final double[][] augmentedMatrix;
+		final int columns;
+		final int rows;
 
-		rows = augmented.length; 
-		columns = augmented[0].length; 
-		input(rows, columns, augmented);
-		gaussJordan(rows, columns, augmented); 
-	}else{
-		System.out.println("How many columns?");
-		columns = user_input.nextInt(); 
-		System.out.println("How many rows?");
-		rows = user_input.nextInt(); 
-		augmented = new double[rows][columns];
-		for(int i =0; i<rows; i++){
-			System.out.println("Type all numbers in row " +i +" separated by space");
-			for(int j = 0; j<columns; j++){
-				augmented[i][j] = user_input.nextInt();
+		try {
+			final boolean invalidInput = args.length != 1 && !args[0].equals("example") && !args[0].equals("input");
+			if (invalidInput) {
+				System.out.println(
+						"Use \"example\" in commandline argument to see the Gauss Jordan Elimination algorithm in action with a given example.");
+				System.out
+						.println("Use \"input\" to pass in your own augmented matrix representing a system of linear equations.");
+				return;
 			}
-		}
-		input(rows, columns, augmented);
-		gaussJordan(rows, columns, augmented); 
-	
-	}
 
-}
+			if (args[0].equals("example")) {
+				System.out.println("This program simulates example from p.14.");
+				augmentedMatrix = new double[][] {
+						{ 2, 4, -2, 2, 4, 2 },
+						{ 1, 2, -1, 2, 0, 4 },
+						{ 3, 6, -2, 1, 9, 1 },
+						{ 5, 10, -4, 5, 9, 9 }
+				};
 
-public static void input(int rows, int columns, double[][] augmented){
-	System.out.println("Input augmented matrix is:" ); 
-	for (int i = 0; i< rows; i++){
-		for (int j=0; j<columns; j++){
-			System.out.print(augmented[i][j]+", ");
-		}
-		System.out.println();
-	} 
-	System.out.println();
-
-}
-
-public static void gaussJordan(int rows, int columns, double[][] augmented){
-	//implement Gauss-Jordan 
-	for(int i = 0; i<rows; i++){
-		boolean empty = true;
-		for(int k =0; k<columns; k++){
-			if(augmented[i][k] !=0)
-				empty=false;
-		}
-		if(!empty){
-			double lead=0;
-			//col of lead var
-			int col = -1; 
-			while(lead == 0){
-				lead = augmented[i][++col];
-			}
-			//divide every value by lead coefficient
-			for( int j=0; j < columns; j++){
-				augmented[i][j] = augmented[i][j]/lead;
-			}
-			//cancel all other instances of that variable in other rows
-			for(int row = 0; row < rows; row++){
-				if (row!= i){
-					double val = augmented[row][col];
-					if(val !=0){
-						for(int j = 0; j < columns; j++){
-							augmented[row][j] = augmented[row][j] - val*augmented[i][j];
-						}
+				// double array represents augmented matrix, from question 1.2.5
+				rows = augmentedMatrix.length;
+				columns = augmentedMatrix[0].length;
+			} else {
+				System.out.println("How many columns?");
+				columns = commandlineInput.nextInt();
+				System.out.println("How many rows?");
+				rows = commandlineInput.nextInt();
+				augmentedMatrix = new double[rows][columns];
+				for (int i = 0; i < rows; i++) {
+					System.out.println("Type all numbers in row " + i + " separated by space");
+					for (int j = 0; j < columns; j++) {
+						augmentedMatrix[i][j] = commandlineInput.nextInt();
 					}
 				}
 			}
-			
+		} finally {
+			commandlineInput.close();
 		}
-		else{
-			if(augmented[i][columns-1] ==0){
-				System.out.println(i+"th row ignored");
-			}
-			else{
-				System.out.println(i+ "th row inconsistent"); 
-			}
-		}	
-		
+
+		System.out.println("Input augmented matrix is:");
+		printMatrix(rows, columns, augmentedMatrix);
+		gaussJordan(rows, columns, augmentedMatrix);
 	}
 
-	//swap rows (unfinished)
+	private static void gaussJordan(final int rows, final int columns, final double[][] augmentedMatrix) {
+		for (int i = 0; i < rows; i++) {
+			final int leadingColumn = getLeadingColumnForRow(columns, augmentedMatrix[i]);
 
+			if (leadingColumn != -1) {
+				final double leadingValue = augmentedMatrix[i][leadingColumn];
 
-	//print out matrix
-	System.out.println("The augmented matrix is therefore: ");
-	for (int i = 0; i< rows; i++){
-		for (int j=0; j<columns; j++){
-			System.out.print(augmented[i][j]+", ");
+				// divide every value in row by lead coefficient
+				for (int j = 0; j < columns; j++) {
+					augmentedMatrix[i][j] = augmentedMatrix[i][j] / leadingValue;
+				}
+
+				// zero out other values in this column for all other rows
+				for (int row = i + 1; row < rows; row++) {
+					final double val = augmentedMatrix[row][leadingColumn];
+					if (val != 0) {
+						for (int j = 0; j < columns; j++) {
+							augmentedMatrix[row][j] = augmentedMatrix[row][j] - val * augmentedMatrix[i][j];
+						}
+					}
+				}
+			} else if (augmentedMatrix[i][columns - 1] != 0) {
+				System.out.println(String
+						.format("Row number %d is inconsistent. The solution is probably wrong but we'll keep going anyway.", i));
+			}
+		}
+
+		// print out matrix
+		System.out.println("The reduced row echelon matrix is therefore: ");
+		printMatrix(rows, columns, getEchelonForm(rows, columns, augmentedMatrix));
+	}
+
+	private static double[][] getEchelonForm(final int rows, final int columns, final double[][] augmentedMatrix) {
+		// swap rows
+		final double[][] solutionMatrix = new double[rows][columns];
+		final boolean[] rowAdded = new boolean[rows];
+		int nextSolutionRow = 0;
+		for (int i = 0; i < columns; i++) {
+			for (int j = 0; j < rows; j++) {
+				if (augmentedMatrix[j][i] == 1.0 && !rowAdded[j]) {
+					solutionMatrix[nextSolutionRow++] = augmentedMatrix[j];
+					rowAdded[j] = true;
+					break;
+				}
+			}
+		}
+
+		return solutionMatrix;
+	}
+
+	private static int getLeadingColumnForRow(final int columns, final double[] augmentedRow) {
+		int leadingColumn = -1;
+
+		for (int k = 0; k < columns; k++) {
+			final double value = augmentedRow[k];
+			if (value != 0) {
+				leadingColumn = k;
+				break;
+			}
+		}
+		return leadingColumn;
+	}
+
+	private static void printMatrix(final int rows, final int columns, final double[][] augmentedMatrix) {
+		for (int i = 0; i < rows; i++) {
+			for (int j = 0; j < columns; j++) {
+				System.out.print(augmentedMatrix[i][j] + ", ");
+			}
+			System.out.println();
 		}
 		System.out.println();
-	} 
-
-
-}
+	}
 }
